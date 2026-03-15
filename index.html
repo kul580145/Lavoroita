@@ -1,4 +1,4 @@
-        <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
@@ -11,7 +11,6 @@
             background: linear-gradient(135deg, #009246, #fff, #ce2b37);
             padding: 20px 20px 15px;
             text-align: center;
-            position: relative;
         }
         .header h1 { font-size: 1.6rem; font-weight: bold; color: #222; }
         .header p { color: #444; margin-top: 5px; font-size: 0.95rem; }
@@ -28,7 +27,6 @@
             padding: 5px 14px;
             font-size: 0.85rem;
             cursor: pointer;
-            transition: all 0.2s;
         }
         .lang-btn.active {
             border-color: #009246;
@@ -84,10 +82,57 @@
         }
         .stat-box .number { font-size: 1.8rem; font-weight: bold; color: #009246; }
         .stat-box .label { font-size: 0.8rem; color: #666; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-        th { background: #f8f9fa; padding: 10px 8px; text-align: left; color: #555; }
-        td { padding: 10px 8px; border-bottom: 1px solid #eee; }
-        .badge { background: #28a745; color: white; padding: 3px 10px; border-radius: 20px; font-size: 0.8rem; }
+
+        /* জব কার্ড */
+        .job-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-left: 4px solid #009246;
+        }
+        .job-title {
+            font-weight: bold;
+            font-size: 1rem;
+            color: #222;
+            margin-bottom: 4px;
+        }
+        .job-company {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        .job-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .job-site {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+        .apply-btn {
+            background: #ce2b37;
+            color: white;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            width: auto;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .apply-btn:hover { background: #a82030; }
+        .no-jobs {
+            text-align: center;
+            color: #999;
+            padding: 20px;
+        }
     </style>
 </head>
 <body>
@@ -96,14 +141,15 @@
     <h1>🇮🇹 LavoroIta</h1>
     <p id="subtitle">CV আপলোড করুন — AI বাকি কাজ করবে</p>
     <div class="lang-bar">
-        <button class="lang-btn active" onclick="setLang('bn')">🇧🇩 বাংলা</button>
-        <button class="lang-btn" onclick="setLang('it')">🇮🇹 Italiano</button>
-        <button class="lang-btn" onclick="setLang('en')">🇬🇧 English</button>
+        <button class="lang-btn active" onclick="setLang('bn', this)">🇧🇩 বাংলা</button>
+        <button class="lang-btn" onclick="setLang('it', this)">🇮🇹 Italiano</button>
+        <button class="lang-btn" onclick="setLang('en', this)">🇬🇧 English</button>
     </div>
 </div>
 
 <div class="container">
 
+    <!-- CV আপলোড -->
     <div class="card">
         <h2 id="cvTitle">📄 আপনার CV আপলোড করুন</h2>
         <input type="file" id="cvFile" accept=".pdf,.doc,.docx">
@@ -111,217 +157,190 @@
         <div id="uploadStatus" class="status"></div>
     </div>
 
+    <!-- জব সার্চ -->
     <div class="card">
-        <h2 id="applyTitle">🚀 অটো-অ্যাপ্লাই শুরু করুন</h2>
-        <input type="text" id="position" placeholder="যেমন: chef, waiter, driver...">
-        <button onclick="startApply()" id="applyBtn">🚀 এখনই Apply করুন</button>
-        <div id="applyStatus" class="status"></div>
+        <h2 id="searchTitle">🔍 জব খুঁজুন</h2>
+        <input type="text" id="position" placeholder="যেমন: receptionist, chef, driver...">
+        <button onclick="searchJobs()" id="searchBtn">🔍 জব খুঁজুন</button>
+        <div id="searchStatus" class="status"></div>
     </div>
 
-    <div class="card">
-        <h2 id="trackerTitle">📊 Application ট্র্যাকার</h2>
+    <!-- জব লিস্ট -->
+    <div class="card" id="jobListCard" style="display:none;">
+        <h2 id="jobListTitle">💼 পাওয়া গেছে</h2>
         <div class="stats">
             <div class="stat-box">
                 <div class="number" id="totalCount">0</div>
-                <div class="label" id="labelTotal">মোট Apply</div>
+                <div class="label" id="labelTotal">মোট জব</div>
             </div>
             <div class="stat-box">
-                <div class="number" id="todayCount">0</div>
-                <div class="label" id="labelToday">আজকে</div>
-            </div>
-            <div class="stat-box">
-                <div class="number" id="siteCount">0</div>
-                <div class="label" id="labelSite">সাইট</div>
+                <div class="number" id="appliedCount">0</div>
+                <div class="label" id="labelApplied">Apply করেছি</div>
             </div>
         </div>
-        <button onclick="loadApplications()" id="refreshBtn" style="margin-bottom:15px; background:#6c757d;">🔄 রিফ্রেশ</button>
-        <div style="overflow-x:auto;">
-            <table>
-                <thead>
-                    <tr>
-                        <th id="thJob">জব</th>
-                        <th id="thCompany">কোম্পানি</th>
-                        <th id="thSite">সাইট</th>
-                        <th id="thStatus">স্ট্যাটাস</th>
-                    </tr>
-                </thead>
-                <tbody id="applicationsTable">
-                    <tr><td colspan="4" style="text-align:center;color:#999;" id="noData">এখনো কোনো Application নেই</td></tr>
-                </tbody>
-            </table>
-        </div>
+        <div id="jobList"></div>
     </div>
 
 </div>
 
 <script>
-const translations = {
+const T = {
     bn: {
         subtitle: "CV আপলোড করুন — AI বাকি কাজ করবে",
         cvTitle: "📄 আপনার CV আপলোড করুন",
         uploadBtn: "CV আপলোড করুন",
-        applyTitle: "🚀 অটো-অ্যাপ্লাই শুরু করুন",
-        placeholder: "যেমন: chef, waiter, driver...",
-        applyBtn: "🚀 এখনই Apply করুন",
-        trackerTitle: "📊 Application ট্র্যাকার",
-        labelTotal: "মোট Apply",
-        labelToday: "আজকে",
-        labelSite: "সাইট",
-        refreshBtn: "🔄 রিফ্রেশ",
-        thJob: "জব", thCompany: "কোম্পানি", thSite: "সাইট", thStatus: "স্ট্যাটাস",
-        noData: "এখনো কোনো Application নেই",
-        uploading: "আপলোড হচ্ছে...",
-        uploadSuccess: "✅ CV আপলোড সফল!",
-        uploadError: "❌ আপলোড ব্যর্থ হয়েছে",
+        searchTitle: "🔍 জব খুঁজুন",
+        placeholder: "যেমন: receptionist, chef, driver...",
+        searchBtn: "🔍 জব খুঁজুন",
         searching: "⏳ জব খোঁজা হচ্ছে...",
-        applySuccess: "✅ Apply সফল!",
-        applyError: "❌ সমস্যা হয়েছে, আবার চেষ্টা করুন"
+        jobListTitle: "💼 পাওয়া গেছে",
+        labelTotal: "মোট জব",
+        labelApplied: "Apply করেছি",
+        applyBtn: "Apply করুন →",
+        uploadOk: "✅ CV আপলোড সফল!",
+        uploadErr: "❌ আপলোড ব্যর্থ",
+        noJobs: "কোনো জব পাওয়া যায়নি",
+        searchErr: "❌ সমস্যা হয়েছে, আবার চেষ্টা করুন"
     },
     it: {
         subtitle: "Carica il CV — L'AI fa il resto",
         cvTitle: "📄 Carica il tuo CV",
         uploadBtn: "Carica CV",
-        applyTitle: "🚀 Inizia Auto-Apply",
-        placeholder: "Es: chef, cameriere, autista...",
-        applyBtn: "🚀 Candidati ora",
-        trackerTitle: "📊 Tracker Candidature",
-        labelTotal: "Totale", labelToday: "Oggi", labelSite: "Siti",
-        refreshBtn: "🔄 Aggiorna",
-        thJob: "Lavoro", thCompany: "Azienda", thSite: "Sito", thStatus: "Stato",
-        noData: "Nessuna candidatura ancora",
-        uploading: "Caricamento...",
-        uploadSuccess: "✅ CV caricato!",
-        uploadError: "❌ Errore nel caricamento",
-        searching: "⏳ Ricerca lavori...",
-        applySuccess: "✅ Candidatura inviata!",
-        applyError: "❌ Errore, riprova"
+        searchTitle: "🔍 Cerca lavoro",
+        placeholder: "Es: receptionist, chef, autista...",
+        searchBtn: "🔍 Cerca",
+        searching: "⏳ Ricerca in corso...",
+        jobListTitle: "💼 Trovati",
+        labelTotal: "Totale",
+        labelApplied: "Candidato",
+        applyBtn: "Candidati →",
+        uploadOk: "✅ CV caricato!",
+        uploadErr: "❌ Errore caricamento",
+        noJobs: "Nessun lavoro trovato",
+        searchErr: "❌ Errore, riprova"
     },
     en: {
         subtitle: "Upload CV — AI does the rest",
         cvTitle: "📄 Upload your CV",
         uploadBtn: "Upload CV",
-        applyTitle: "🚀 Start Auto-Apply",
-        placeholder: "E.g: chef, waiter, driver...",
-        applyBtn: "🚀 Apply Now",
-        trackerTitle: "📊 Application Tracker",
-        labelTotal: "Total", labelToday: "Today", labelSite: "Sites",
-        refreshBtn: "🔄 Refresh",
-        thJob: "Job", thCompany: "Company", thSite: "Site", thStatus: "Status",
-        noData: "No applications yet",
-        uploading: "Uploading...",
-        uploadSuccess: "✅ CV uploaded!",
-        uploadError: "❌ Upload failed",
-        searching: "⏳ Searching jobs...",
-        applySuccess: "✅ Applied successfully!",
-        applyError: "❌ Error, please try again"
+        searchTitle: "🔍 Search Jobs",
+        placeholder: "E.g: receptionist, chef, driver...",
+        searchBtn: "🔍 Search",
+        searching: "⏳ Searching...",
+        jobListTitle: "💼 Found",
+        labelTotal: "Total Jobs",
+        labelApplied: "Applied",
+        applyBtn: "Apply →",
+        uploadOk: "✅ CV uploaded!",
+        uploadErr: "❌ Upload failed",
+        noJobs: "No jobs found",
+        searchErr: "❌ Error, please try again"
     }
 };
 
-let currentLang = 'bn';
-const today = new Date().toISOString().split('T')[0];
+let lang = 'bn';
+let appliedCount = 0;
 
-function setLang(lang) {
-    currentLang = lang;
-    const t = translations[lang];
+function setLang(l, btn) {
+    lang = l;
+    const t = T[l];
     document.getElementById('subtitle').textContent = t.subtitle;
     document.getElementById('cvTitle').textContent = t.cvTitle;
     document.getElementById('uploadBtn').textContent = t.uploadBtn;
-    document.getElementById('applyTitle').textContent = t.applyTitle;
+    document.getElementById('searchTitle').textContent = t.searchTitle;
     document.getElementById('position').placeholder = t.placeholder;
-    document.getElementById('applyBtn').textContent = t.applyBtn;
-    document.getElementById('trackerTitle').textContent = t.trackerTitle;
+    document.getElementById('searchBtn').textContent = t.searchBtn;
+    document.getElementById('jobListTitle').textContent = t.jobListTitle;
     document.getElementById('labelTotal').textContent = t.labelTotal;
-    document.getElementById('labelToday').textContent = t.labelToday;
-    document.getElementById('labelSite').textContent = t.labelSite;
-    document.getElementById('refreshBtn').textContent = t.refreshBtn;
-    document.getElementById('thJob').textContent = t.thJob;
-    document.getElementById('thCompany').textContent = t.thCompany;
-    document.getElementById('thSite').textContent = t.thSite;
-    document.getElementById('thStatus').textContent = t.thStatus;
-
-    document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
+    document.getElementById('labelApplied').textContent = t.labelApplied;
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
 }
 
 async function uploadCV() {
     const file = document.getElementById('cvFile').files[0];
-    const t = translations[currentLang];
-    if (!file) { alert(t.uploadBtn); return; }
+    if (!file) { alert('CV সিলেক্ট করুন!'); return; }
     const btn = document.getElementById('uploadBtn');
     btn.disabled = true;
-    btn.textContent = t.uploading;
     const formData = new FormData();
     formData.append('file', file);
     try {
         const res = await fetch('/upload-cv', { method: 'POST', body: formData });
         const data = await res.json();
-        const status = document.getElementById('uploadStatus');
-        status.className = 'status success';
-        status.textContent = t.uploadSuccess;
+        const s = document.getElementById('uploadStatus');
+        s.className = 'status success';
+        s.textContent = T[lang].uploadOk;
     } catch(e) {
-        const status = document.getElementById('uploadStatus');
-        status.className = 'status error';
-        status.textContent = t.uploadError;
+        const s = document.getElementById('uploadStatus');
+        s.className = 'status error';
+        s.textContent = T[lang].uploadErr;
     }
     btn.disabled = false;
-    btn.textContent = t.uploadBtn;
+    btn.textContent = T[lang].uploadBtn;
 }
 
-async function startApply() {
+async function searchJobs() {
     const position = document.getElementById('position').value.trim();
-    const t = translations[currentLang];
-    if (!position) { alert(t.placeholder); return; }
-    const btn = document.getElementById('applyBtn');
-    const status = document.getElementById('applyStatus');
+    if (!position) { alert('পজিশন লিখুন!'); return; }
+    
+    const btn = document.getElementById('searchBtn');
+    const status = document.getElementById('searchStatus');
     btn.disabled = true;
-    btn.textContent = t.searching;
+    btn.textContent = T[lang].searching;
     status.className = 'status loading';
-    status.textContent = t.searching;
+    status.textContent = T[lang].searching;
+    
     const formData = new FormData();
     formData.append('position', position);
+    
     try {
         const res = await fetch('/start-apply', { method: 'POST', body: formData });
         const data = await res.json();
-        status.className = 'status success';
-        status.textContent = t.applySuccess + ' ' + data.message;
-        loadApplications();
+        
+        status.style.display = 'none';
+        showJobs(data.results);
     } catch(e) {
         status.className = 'status error';
-        status.textContent = t.applyError;
+        status.textContent = T[lang].searchErr;
     }
+    
     btn.disabled = false;
-    btn.textContent = t.applyBtn;
+    btn.textContent = T[lang].searchBtn;
 }
 
-async function loadApplications() {
-    try {
-        const res = await fetch('/applications');
-        const data = await res.json();
-        const apps = data.applications;
-        document.getElementById('totalCount').textContent = apps.length;
-        const todayApps = apps.filter(a => a.date && a.date.startsWith(today));
-        document.getElementById('todayCount').textContent = todayApps.length;
-        const sites = new Set(apps.map(a => a.site));
-        document.getElementById('siteCount').textContent = sites.size;
-        const tbody = document.getElementById('applicationsTable');
-        if (apps.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#999;">${translations[currentLang].noData}</td></tr>`;
-            return;
-        }
-        tbody.innerHTML = apps.slice(0, 20).map(app => `
-            <tr>
-                <td>${app.title}</td>
-                <td>${app.company}</td>
-                <td>${app.site}</td>
-                <td><span class="badge">${app.status}</span></td>
-            </tr>
-        `).join('');
-    } catch(e) {
-        console.log('error:', e);
+function showJobs(jobs) {
+    const card = document.getElementById('jobListCard');
+    const list = document.getElementById('jobList');
+    
+    card.style.display = 'block';
+    document.getElementById('totalCount').textContent = jobs.length;
+    appliedCount = 0;
+    document.getElementById('appliedCount').textContent = 0;
+    
+    if (jobs.length === 0) {
+        list.innerHTML = `<div class="no-jobs">${T[lang].noJobs}</div>`;
+        return;
     }
+    
+    list.innerHTML = jobs.map((job, i) => `
+        <div class="job-card" id="jobcard-${i}">
+            <div class="job-title">${job.title}</div>
+            <div class="job-company">🏢 ${job.company}</div>
+            <div class="job-footer">
+                <span class="job-site">📌 ${job.site}</span>
+                ${job.url ? 
+                    `<a href="${job.url}" target="_blank" class="apply-btn" onclick="countApply(${i})">${T[lang].applyBtn}</a>` 
+                    : `<span style="color:#aaa;font-size:0.8rem;">লিংক নেই</span>`
+                }
+            </div>
+        </div>
+    `).join('');
 }
 
-loadApplications();
+function countApply(i) {
+    appliedCount++;
+    document.getElementById('appliedCount').textContent = appliedCount;
+}
 </script>
 
 </body>
