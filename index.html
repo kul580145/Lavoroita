@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🇮🇹 LavoroIta</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f0f4f8; }
+        .header {
+            background: linear-gradient(135deg, #009246, #fff, #ce2b37);
+            padding: 25px 20px;
+            text-align: center;
+        }
+        .header h1 { font-size: 1.6rem; font-weight: bold; color: #222; }
+        .header p { color: #444; margin-top: 5px; }
+        .container { max-width: 600px; margin: 20px auto; padding: 0 15px; }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        .card h2 { color: #009246; margin-bottom: 15px; font-size: 1.1rem; }
+        input[type="file"], input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            font-size: 1rem;
+        }
+        button {
+            background: #009246;
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+        }
+        button:disabled { background: #aaa; }
+        .status {
+            margin-top: 12px;
+            padding: 12px;
+            border-radius: 8px;
+            display: none;
+        }
+        .success { background: #d4edda; color: #155724; display: block !important; }
+        .loading { background: #fff3cd; color: #856404; display: block !important; }
+        .error { background: #f8d7da; color: #721c24; display: block !important; }
+        .stats {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .stat-box {
+            flex: 1;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        .stat-box .number { font-size: 1.8rem; font-weight: bold; color: #009246; }
+        .stat-box .label { font-size: 0.8rem; color: #666; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        th { background: #f8f9fa; padding: 10px 8px; text-align: left; color: #555; }
+        td { padding: 10px 8px; border-bottom: 1px solid #eee; }
+        .badge { background: #28a745; color: white; padding: 3px 10px; border-radius: 20px; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>🇮🇹 LavoroIta</h1>
+    <p>CV আপলোড করুন — AI বাকি কাজ করবে</p>
+</div>
+
+<div class="container">
+
+    <div class="card">
+        <h2>📄 আপনার CV আপলোড করুন</h2>
+        <input type="file" id="cvFile" accept=".pdf,.doc,.docx">
+        <button onclick="uploadCV()" id="uploadBtn">CV আপলোড করুন</button>
+        <div id="uploadStatus" class="status"></div>
+    </div>
+
+    <div class="card">
+        <h2>🚀 অটো-অ্যাপ্লাই শুরু করুন</h2>
+        <input type="text" id="position" placeholder="যেমন: chef, waiter, driver...">
+        <button onclick="startApply()" id="applyBtn">🚀 এখনই Apply করুন</button>
+        <div id="applyStatus" class="status"></div>
+    </div>
+
+    <div class="card">
+        <h2>📊 Application ট্র্যাকার</h2>
+        <div class="stats">
+            <div class="stat-box">
+                <div class="number" id="totalCount">0</div>
+                <div class="label">মোট Apply</div>
+            </div>
+            <div class="stat-box">
+                <div class="number" id="todayCount">0</div>
+                <div class="label">আজকে</div>
+            </div>
+            <div class="stat-box">
+                <div class="number" id="siteCount">0</div>
+                <div class="label">সাইট</div>
+            </div>
+        </div>
+        <button onclick="loadApplications()" style="margin-bottom:15px; background:#6c757d;">🔄 রিফ্রেশ</button>
+        <div style="overflow-x:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>জব</th>
+                        <th>কোম্পানি</th>
+                        <th>সাইট</th>
+                        <th>স্ট্যাটাস</th>
+                    </tr>
+                </thead>
+                <tbody id="applicationsTable">
+                    <tr><td colspan="4" style="text-align:center;color:#999;">এখনো কোনো Application নেই</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const today = new Date().toISOString().split('T')[0];
+
+    async function uploadCV() {
+        const file = document.getElementById('cvFile').files[0];
+        if (!file) { alert('আগে CV সিলেক্ট করুন!'); return; }
+        const btn = document.getElementById('uploadBtn');
+        btn.disabled = true;
+        btn.textContent = 'আপলোড হচ্ছে...';
+        const formData = new FormData();
+        formData.append('file', file);
+        try {
+            const res = await fetch('/upload-cv', { method: 'POST', body: formData });
+            const data = await res.json();
+            const status = document.getElementById('uploadStatus');
+            status.className = 'status success';
+            status.textContent = '✅ ' + data.message;
+        } catch(e) {
+            const status = document.getElementById('uploadStatus');
+            status.className = 'status error';
+            status.textContent = '❌ আপলোড ব্যর্থ হয়েছে';
+        }
+        btn.disabled = false;
+        btn.textContent = 'CV আপলোড করুন';
+    }
+
+    async function startApply() {
+        const position = document.getElementById('position').value.trim();
+        if (!position) { alert('পজিশন লিখুন!'); return; }
+        const btn = document.getElementById('applyBtn');
+        const status = document.getElementById('applyStatus');
+        btn.disabled = true;
+        btn.textContent = '⏳ খোঁজা হচ্ছে...';
+        status.className = 'status loading';
+        status.textContent = '⏳ Indeed, InfoJobs, Monster থেকে জব খোঁজা হচ্ছে...';
+        const formData = new FormData();
+        formData.append('position', position);
+        try {
+            const res = await fetch('/start-apply', { method: 'POST', body: formData });
+            const data = await res.json();
+            status.className = 'status success';
+            status.textContent = '✅ ' + data.message;
+            loadApplications();
+        } catch(e) {
+            status.className = 'status error';
+            status.textContent = '❌ সমস্যা হয়েছে, আবার চেষ্টা করুন';
+        }
+        btn.disabled = false;
+        btn.textContent = '🚀 এখনই Apply করুন';
+    }
+
+    async function loadApplications() {
+        try {
+            const res = await fetch('/applications');
+            const data = await res.json();
+            const apps = data.applications;
+            document.getElementById('totalCount').textContent = apps.length;
+            const todayApps = apps.filter(a => a.date && a.date.startsWith(today));
+            document.getElementById('todayCount').textContent = todayApps.length;
+            const sites = new Set(apps.map(a => a.site));
+            document.getElementById('siteCount').textContent = sites.size;
+            const tbody = document.getElementById('applicationsTable');
+            if (apps.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#999;">এখনো কোনো Application নেই</td></tr>';
+                return;
+            }
+            tbody.innerHTML = apps.slice(0, 20).map(app => `
+                <tr>
+                    <td>${app.title}</td>
+                    <td>${app.company}</td>
+                    <td>${app.site}</td>
+                    <td><span class="badge">${app.status}</span></td>
+                </tr>
+            `).join('');
+        } catch(e) {
+            console.log('error:', e);
+        }
+    }
+
+    loadApplications();
+</script>
+
+</body>
+</html>
