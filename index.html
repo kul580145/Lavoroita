@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+        <!DOCTYPE html>
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
@@ -9,11 +9,33 @@
         body { font-family: Arial, sans-serif; background: #f0f4f8; }
         .header {
             background: linear-gradient(135deg, #009246, #fff, #ce2b37);
-            padding: 25px 20px;
+            padding: 20px 20px 15px;
             text-align: center;
+            position: relative;
         }
         .header h1 { font-size: 1.6rem; font-weight: bold; color: #222; }
-        .header p { color: #444; margin-top: 5px; }
+        .header p { color: #444; margin-top: 5px; font-size: 0.95rem; }
+        .lang-bar {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .lang-btn {
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 20px;
+            padding: 5px 14px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .lang-btn.active {
+            border-color: #009246;
+            background: #009246;
+            color: white;
+            font-weight: bold;
+        }
         .container { max-width: 600px; margin: 20px auto; padding: 0 15px; }
         .card {
             background: white;
@@ -52,11 +74,7 @@
         .success { background: #d4edda; color: #155724; display: block !important; }
         .loading { background: #fff3cd; color: #856404; display: block !important; }
         .error { background: #f8d7da; color: #721c24; display: block !important; }
-        .stats {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
+        .stats { display: flex; gap: 10px; margin-bottom: 15px; }
         .stat-box {
             flex: 1;
             background: #f8f9fa;
@@ -76,54 +94,59 @@
 
 <div class="header">
     <h1>🇮🇹 LavoroIta</h1>
-    <p>CV আপলোড করুন — AI বাকি কাজ করবে</p>
+    <p id="subtitle">CV আপলোড করুন — AI বাকি কাজ করবে</p>
+    <div class="lang-bar">
+        <button class="lang-btn active" onclick="setLang('bn')">🇧🇩 বাংলা</button>
+        <button class="lang-btn" onclick="setLang('it')">🇮🇹 Italiano</button>
+        <button class="lang-btn" onclick="setLang('en')">🇬🇧 English</button>
+    </div>
 </div>
 
 <div class="container">
 
     <div class="card">
-        <h2>📄 আপনার CV আপলোড করুন</h2>
+        <h2 id="cvTitle">📄 আপনার CV আপলোড করুন</h2>
         <input type="file" id="cvFile" accept=".pdf,.doc,.docx">
         <button onclick="uploadCV()" id="uploadBtn">CV আপলোড করুন</button>
         <div id="uploadStatus" class="status"></div>
     </div>
 
     <div class="card">
-        <h2>🚀 অটো-অ্যাপ্লাই শুরু করুন</h2>
+        <h2 id="applyTitle">🚀 অটো-অ্যাপ্লাই শুরু করুন</h2>
         <input type="text" id="position" placeholder="যেমন: chef, waiter, driver...">
         <button onclick="startApply()" id="applyBtn">🚀 এখনই Apply করুন</button>
         <div id="applyStatus" class="status"></div>
     </div>
 
     <div class="card">
-        <h2>📊 Application ট্র্যাকার</h2>
+        <h2 id="trackerTitle">📊 Application ট্র্যাকার</h2>
         <div class="stats">
             <div class="stat-box">
                 <div class="number" id="totalCount">0</div>
-                <div class="label">মোট Apply</div>
+                <div class="label" id="labelTotal">মোট Apply</div>
             </div>
             <div class="stat-box">
                 <div class="number" id="todayCount">0</div>
-                <div class="label">আজকে</div>
+                <div class="label" id="labelToday">আজকে</div>
             </div>
             <div class="stat-box">
                 <div class="number" id="siteCount">0</div>
-                <div class="label">সাইট</div>
+                <div class="label" id="labelSite">সাইট</div>
             </div>
         </div>
-        <button onclick="loadApplications()" style="margin-bottom:15px; background:#6c757d;">🔄 রিফ্রেশ</button>
+        <button onclick="loadApplications()" id="refreshBtn" style="margin-bottom:15px; background:#6c757d;">🔄 রিফ্রেশ</button>
         <div style="overflow-x:auto;">
             <table>
                 <thead>
                     <tr>
-                        <th>জব</th>
-                        <th>কোম্পানি</th>
-                        <th>সাইট</th>
-                        <th>স্ট্যাটাস</th>
+                        <th id="thJob">জব</th>
+                        <th id="thCompany">কোম্পানি</th>
+                        <th id="thSite">সাইট</th>
+                        <th id="thStatus">স্ট্যাটাস</th>
                     </tr>
                 </thead>
                 <tbody id="applicationsTable">
-                    <tr><td colspan="4" style="text-align:center;color:#999;">এখনো কোনো Application নেই</td></tr>
+                    <tr><td colspan="4" style="text-align:center;color:#999;" id="noData">এখনো কোনো Application নেই</td></tr>
                 </tbody>
             </table>
         </div>
@@ -132,85 +155,173 @@
 </div>
 
 <script>
-    const today = new Date().toISOString().split('T')[0];
-
-    async function uploadCV() {
-        const file = document.getElementById('cvFile').files[0];
-        if (!file) { alert('আগে CV সিলেক্ট করুন!'); return; }
-        const btn = document.getElementById('uploadBtn');
-        btn.disabled = true;
-        btn.textContent = 'আপলোড হচ্ছে...';
-        const formData = new FormData();
-        formData.append('file', file);
-        try {
-            const res = await fetch('/upload-cv', { method: 'POST', body: formData });
-            const data = await res.json();
-            const status = document.getElementById('uploadStatus');
-            status.className = 'status success';
-            status.textContent = '✅ ' + data.message;
-        } catch(e) {
-            const status = document.getElementById('uploadStatus');
-            status.className = 'status error';
-            status.textContent = '❌ আপলোড ব্যর্থ হয়েছে';
-        }
-        btn.disabled = false;
-        btn.textContent = 'CV আপলোড করুন';
+const translations = {
+    bn: {
+        subtitle: "CV আপলোড করুন — AI বাকি কাজ করবে",
+        cvTitle: "📄 আপনার CV আপলোড করুন",
+        uploadBtn: "CV আপলোড করুন",
+        applyTitle: "🚀 অটো-অ্যাপ্লাই শুরু করুন",
+        placeholder: "যেমন: chef, waiter, driver...",
+        applyBtn: "🚀 এখনই Apply করুন",
+        trackerTitle: "📊 Application ট্র্যাকার",
+        labelTotal: "মোট Apply",
+        labelToday: "আজকে",
+        labelSite: "সাইট",
+        refreshBtn: "🔄 রিফ্রেশ",
+        thJob: "জব", thCompany: "কোম্পানি", thSite: "সাইট", thStatus: "স্ট্যাটাস",
+        noData: "এখনো কোনো Application নেই",
+        uploading: "আপলোড হচ্ছে...",
+        uploadSuccess: "✅ CV আপলোড সফল!",
+        uploadError: "❌ আপলোড ব্যর্থ হয়েছে",
+        searching: "⏳ জব খোঁজা হচ্ছে...",
+        applySuccess: "✅ Apply সফল!",
+        applyError: "❌ সমস্যা হয়েছে, আবার চেষ্টা করুন"
+    },
+    it: {
+        subtitle: "Carica il CV — L'AI fa il resto",
+        cvTitle: "📄 Carica il tuo CV",
+        uploadBtn: "Carica CV",
+        applyTitle: "🚀 Inizia Auto-Apply",
+        placeholder: "Es: chef, cameriere, autista...",
+        applyBtn: "🚀 Candidati ora",
+        trackerTitle: "📊 Tracker Candidature",
+        labelTotal: "Totale", labelToday: "Oggi", labelSite: "Siti",
+        refreshBtn: "🔄 Aggiorna",
+        thJob: "Lavoro", thCompany: "Azienda", thSite: "Sito", thStatus: "Stato",
+        noData: "Nessuna candidatura ancora",
+        uploading: "Caricamento...",
+        uploadSuccess: "✅ CV caricato!",
+        uploadError: "❌ Errore nel caricamento",
+        searching: "⏳ Ricerca lavori...",
+        applySuccess: "✅ Candidatura inviata!",
+        applyError: "❌ Errore, riprova"
+    },
+    en: {
+        subtitle: "Upload CV — AI does the rest",
+        cvTitle: "📄 Upload your CV",
+        uploadBtn: "Upload CV",
+        applyTitle: "🚀 Start Auto-Apply",
+        placeholder: "E.g: chef, waiter, driver...",
+        applyBtn: "🚀 Apply Now",
+        trackerTitle: "📊 Application Tracker",
+        labelTotal: "Total", labelToday: "Today", labelSite: "Sites",
+        refreshBtn: "🔄 Refresh",
+        thJob: "Job", thCompany: "Company", thSite: "Site", thStatus: "Status",
+        noData: "No applications yet",
+        uploading: "Uploading...",
+        uploadSuccess: "✅ CV uploaded!",
+        uploadError: "❌ Upload failed",
+        searching: "⏳ Searching jobs...",
+        applySuccess: "✅ Applied successfully!",
+        applyError: "❌ Error, please try again"
     }
+};
 
-    async function startApply() {
-        const position = document.getElementById('position').value.trim();
-        if (!position) { alert('পজিশন লিখুন!'); return; }
-        const btn = document.getElementById('applyBtn');
-        const status = document.getElementById('applyStatus');
-        btn.disabled = true;
-        btn.textContent = '⏳ খোঁজা হচ্ছে...';
-        status.className = 'status loading';
-        status.textContent = '⏳ Indeed, InfoJobs, Monster থেকে জব খোঁজা হচ্ছে...';
-        const formData = new FormData();
-        formData.append('position', position);
-        try {
-            const res = await fetch('/start-apply', { method: 'POST', body: formData });
-            const data = await res.json();
-            status.className = 'status success';
-            status.textContent = '✅ ' + data.message;
-            loadApplications();
-        } catch(e) {
-            status.className = 'status error';
-            status.textContent = '❌ সমস্যা হয়েছে, আবার চেষ্টা করুন';
-        }
-        btn.disabled = false;
-        btn.textContent = '🚀 এখনই Apply করুন';
+let currentLang = 'bn';
+const today = new Date().toISOString().split('T')[0];
+
+function setLang(lang) {
+    currentLang = lang;
+    const t = translations[lang];
+    document.getElementById('subtitle').textContent = t.subtitle;
+    document.getElementById('cvTitle').textContent = t.cvTitle;
+    document.getElementById('uploadBtn').textContent = t.uploadBtn;
+    document.getElementById('applyTitle').textContent = t.applyTitle;
+    document.getElementById('position').placeholder = t.placeholder;
+    document.getElementById('applyBtn').textContent = t.applyBtn;
+    document.getElementById('trackerTitle').textContent = t.trackerTitle;
+    document.getElementById('labelTotal').textContent = t.labelTotal;
+    document.getElementById('labelToday').textContent = t.labelToday;
+    document.getElementById('labelSite').textContent = t.labelSite;
+    document.getElementById('refreshBtn').textContent = t.refreshBtn;
+    document.getElementById('thJob').textContent = t.thJob;
+    document.getElementById('thCompany').textContent = t.thCompany;
+    document.getElementById('thSite').textContent = t.thSite;
+    document.getElementById('thStatus').textContent = t.thStatus;
+
+    document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+}
+
+async function uploadCV() {
+    const file = document.getElementById('cvFile').files[0];
+    const t = translations[currentLang];
+    if (!file) { alert(t.uploadBtn); return; }
+    const btn = document.getElementById('uploadBtn');
+    btn.disabled = true;
+    btn.textContent = t.uploading;
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+        const res = await fetch('/upload-cv', { method: 'POST', body: formData });
+        const data = await res.json();
+        const status = document.getElementById('uploadStatus');
+        status.className = 'status success';
+        status.textContent = t.uploadSuccess;
+    } catch(e) {
+        const status = document.getElementById('uploadStatus');
+        status.className = 'status error';
+        status.textContent = t.uploadError;
     }
+    btn.disabled = false;
+    btn.textContent = t.uploadBtn;
+}
 
-    async function loadApplications() {
-        try {
-            const res = await fetch('/applications');
-            const data = await res.json();
-            const apps = data.applications;
-            document.getElementById('totalCount').textContent = apps.length;
-            const todayApps = apps.filter(a => a.date && a.date.startsWith(today));
-            document.getElementById('todayCount').textContent = todayApps.length;
-            const sites = new Set(apps.map(a => a.site));
-            document.getElementById('siteCount').textContent = sites.size;
-            const tbody = document.getElementById('applicationsTable');
-            if (apps.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#999;">এখনো কোনো Application নেই</td></tr>';
-                return;
-            }
-            tbody.innerHTML = apps.slice(0, 20).map(app => `
-                <tr>
-                    <td>${app.title}</td>
-                    <td>${app.company}</td>
-                    <td>${app.site}</td>
-                    <td><span class="badge">${app.status}</span></td>
-                </tr>
-            `).join('');
-        } catch(e) {
-            console.log('error:', e);
-        }
+async function startApply() {
+    const position = document.getElementById('position').value.trim();
+    const t = translations[currentLang];
+    if (!position) { alert(t.placeholder); return; }
+    const btn = document.getElementById('applyBtn');
+    const status = document.getElementById('applyStatus');
+    btn.disabled = true;
+    btn.textContent = t.searching;
+    status.className = 'status loading';
+    status.textContent = t.searching;
+    const formData = new FormData();
+    formData.append('position', position);
+    try {
+        const res = await fetch('/start-apply', { method: 'POST', body: formData });
+        const data = await res.json();
+        status.className = 'status success';
+        status.textContent = t.applySuccess + ' ' + data.message;
+        loadApplications();
+    } catch(e) {
+        status.className = 'status error';
+        status.textContent = t.applyError;
     }
+    btn.disabled = false;
+    btn.textContent = t.applyBtn;
+}
 
-    loadApplications();
+async function loadApplications() {
+    try {
+        const res = await fetch('/applications');
+        const data = await res.json();
+        const apps = data.applications;
+        document.getElementById('totalCount').textContent = apps.length;
+        const todayApps = apps.filter(a => a.date && a.date.startsWith(today));
+        document.getElementById('todayCount').textContent = todayApps.length;
+        const sites = new Set(apps.map(a => a.site));
+        document.getElementById('siteCount').textContent = sites.size;
+        const tbody = document.getElementById('applicationsTable');
+        if (apps.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#999;">${translations[currentLang].noData}</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = apps.slice(0, 20).map(app => `
+            <tr>
+                <td>${app.title}</td>
+                <td>${app.company}</td>
+                <td>${app.site}</td>
+                <td><span class="badge">${app.status}</span></td>
+            </tr>
+        `).join('');
+    } catch(e) {
+        console.log('error:', e);
+    }
+}
+
+loadApplications();
 </script>
 
 </body>
